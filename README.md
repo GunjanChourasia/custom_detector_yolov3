@@ -40,8 +40,8 @@ This repo already has a annotated data for ants and bees.
 If you wish to train on some other data sets then annotate your data by above given method and download the annotated data, keep it in data_output folder (This folder should contain the data folder and cfg file downloaded after annotating the data.)
 
 ### Run
-
-Cmd (this will be for one-class detector):
+Before startng training, change the number of classes in cfg file, in cfg folder, here yolov3.tiny.cfg is used so changes are to be made there. Also keep the batch size according to train, comment out the test section in cfg file (its on top of the file)
+Cmd :
 
     python train.py
    
@@ -56,7 +56,7 @@ Usage:
 Here, you will use your trained model in a live video feed.  Ensure the `yolov3-tiny.cfg` is set up to test (see first lines of file).  `runs` is where trained models get saved by default.
 
 ### Run
-
+Change batch size to 1 in the cfg file in cfg folder, and comment out the train section in cfg file
 Cmd:
 
     python live.py --weights runs/<your trained model>.pth --confidence 0.6
