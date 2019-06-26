@@ -45,7 +45,7 @@ def arg_parse():
                         "weightsfile",
                         default = "yolov3-tiny.weights", type = str)
     parser.add_argument("--datacfg", dest = "datafile", help = "cfg file containing the configuration for the dataset",
-                        type = str, default = "cfg/data.data")
+                        type = str, default = "data_output/data/obj.data")
     parser.add_argument("--lr", dest = "lr", type = float, default = 0.001)
     parser.add_argument("--mom", dest = "mom", type = float, default = 0)
     parser.add_argument("--wd", dest = "wd", type = float, default = 0)
