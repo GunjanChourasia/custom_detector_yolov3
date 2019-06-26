@@ -2,21 +2,6 @@
 
 **This fork is a work in progress.  It will be noted here when this is ready for broader, more production, use.**
 
-Status (going well, main stuff done):
-
-* [x] Replace CUDA flag in lieu of the simple `tensor_xyz.to(device)` method
-* [x] Fix `customloader.py` to take multiple classes as an argument
-* [x] Add a custom collate function to `train.py` to detect empty boxes and exclude
-* [x] Fix resizing transform by creating a custom `YoloResize` transform called `YoloResizeTransform`
-* [x] Add finetuning to the `train.py` script
----
-* [ ] Fix the learning rate adjustment to decrease more consistently during training and finetuning
-* [ ] Fix `customloader.py` to take custom (as an argument) anchors, anchor numbers and model input dims
-* [ ] Ensure `live.py` is correctly drawing bounding boxes
-* [ ] Ensure this codebase works with full sized YOLOv3 network (only tested with the tiny architecture)
-* [ ] flake8 (clean up extra blank lines, long lines, etc.)
-* [ ] Remove `*` imports in place of explicit imports
-
 _We love you COCO, but we have our own interests now._
 
 This project is a "You Only Look Once" v3 sample using PyTorch, a fork of https://github.com/ayooshkathuria/pytorch-yolo-v3, with updates and improvements specifically for the Tiny architecture on custom data labeled with VoTT (versus the classic download of VOC or COCO data and labels).  This fork allows the user to **bring their own dataset**.
@@ -50,28 +35,17 @@ Modify the filter number of the CNN layer directly before each [yolo] layer to b
 
 The tiny architecture has 6 anchors, whereas, the non-tiny or full sized YOLOv3 architecture has 9 anchors.  These anchors should be manually discovered with `kmeans.py` and specified in the `cfg` file. 
 
-**Additional Instructions**
-
-* Create a list of the training images file paths, one per line, called `train.txt` and place it in the `data` folder.  e.g.
-
-`train.txt`
-```
-data/obj/482133.JPG
-data/obj/482128.JPG
-data/obj/482945.jpg
-data/obj/483153.JPG
-data/obj/481427.jpg
-data/obj/480836.jpg
-data/obj/483522.JPG
-data/obj/482535.JPG
-data/obj/483510.JPG
-```
+**Test and Train Data**
+This repo already has a annotated data for ants and bees.
+If you wish to train on some other data sets then annotate your data by above given method and download the annotated data, keep it in data_output folder (This folder should contain the data folder and cfg file downloaded after annotating the data.)
 
 ### Run
 
 Cmd (this will be for one-class detector):
 
-    python train.py --cfg cfg/yolov3-tiny.cfg --weights yolov3-tiny.weights --datacfg data/obj.data
+    python train.py
+   
+This is for yolov3-tiny weights and cfg.
 
 Usage:
 
@@ -81,26 +55,11 @@ Usage:
 
 Here, you will use your trained model in a live video feed.  Ensure the `yolov3-tiny.cfg` is set up to test (see first lines of file).  `runs` is where trained models get saved by default.
 
-**Additional Instructions**
-
-* Create a list of the test images file paths, one per line, called `test.txt` and place it in the `data` folder.  e.g.
-
-`test.txt`
-```
-data/obj/482308.JPG
-data/obj/483367.JPG
-data/obj/483037.jpg
-data/obj/481962.JPG
-data/obj/481472.jpg
-data/obj/483303.JPG
-data/obj/483326.JPG
-```
-
 ### Run
 
 Cmd:
 
-    python live.py --cfg cfg/yolov3-tiny.cfg --weights runs/<your trained model>.pth --datacfg data/obj.data --confidence 0.6
+    python live.py --weights runs/<your trained model>.pth --confidence 0.6
 
 Usage:
     
