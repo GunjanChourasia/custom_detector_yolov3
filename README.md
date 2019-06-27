@@ -41,6 +41,7 @@ If you wish to train on some other data sets then annotate your data by above gi
 
 ### Run
 Before startng training, change the number of classes in cfg file, in cfg folder, here yolov3.tiny.cfg is used so changes are to be made there. Also keep the batch size according to train, comment out the test section in cfg file (its on top of the file)
+
 Cmd :
 
     python train.py
@@ -57,9 +58,22 @@ Here, you will use your trained model in a live video feed.  Ensure the `yolov3-
 
 ### Run
 Change batch size to 1 in the cfg file in cfg folder, and comment out the train section in cfg file
+
+**For detection on image**
+
+Add the images on which the detection needs to be performed in the test folder, the output will be saved in detection folder.
+and run the following
 Cmd:
 
     python live.py --weights runs/<your trained model>.pth --confidence 0.6
+
+**For detection on video/live video**
+
+Type the following, if you want to do detection on a recorded video then specify the videos destination by using the --video argument, otherwise it will run on live video.
+Cmd:
+
+    python live.py --deton "video" --weights runs/<your trained model>.pth --confidence 0.6
+
 
 Usage:
     
