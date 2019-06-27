@@ -1,5 +1,6 @@
 from __future__ import division
 import time
+import os
 import torch 
 import torch.nn as nn
 from torch.autograd import Variable
@@ -82,7 +83,8 @@ def write(x, img):
 def arg_parse():
     """Parse arguements to the detect module"""
     parser = argparse.ArgumentParser(description='YOLO v3 Video Detection Module')
-   
+    parser.add_argument("--deton", dest='deton', help = 
+                        "detection upon image or video, type image or video as argument", type = str)
     parser.add_argument("--video", dest='video', help = 
                         "Video to run detection upon", type = str)
     # parser.add_argument("--dataset", dest="dataset", help="Dataset on which the network has been trained", default="pascal")
@@ -100,6 +102,14 @@ def arg_parse():
                         "Input resolution of the network. Increase to increase accuracy. Decrease to increase speed",
                         default="416", type = str)
     return parser.parse_args()
+
+def load_images_from_folder(folder):
+    images = []
+    for filename in os.listdir(folder):
+        img = cv2.imread(os.path.join(folder,filename))
+        if img is not None:
+            images.append(img)
+    return images
 
 
 if __name__ == '__main__':
@@ -122,7 +132,7 @@ if __name__ == '__main__':
 
     model = model.to(device)
     model.eval()
-    
+    deton =args.deton
     if args.video: # video file
         videofile = args.video
         cap = cv2.VideoCapture(videofile)
@@ -132,12 +142,61 @@ if __name__ == '__main__':
     
     frames = 0
     start = time.time()
-
-    while cap.isOpened():
-        
-        ret, frame = cap.read()
-        if ret:
+    if deton=="video":
+        while cap.isOpened():
             
+            ret, frame = cap.read()
+            if ret:
+                
+                img, orig_im, dim = prep_image(frame, inp_dim)
+                im_dim = torch.torch.cuda.FloatTensor(dim).repeat(1,2)
+
+                model = model.to(device)
+                img=img.to(device)
+                output = model(img)
+                output=output.to(torch.device("cuda"))
+                output = write_results(output, confidence, num_classes, nms=True, nms_conf=nms_thesh)
+
+                if type(output) == int:
+                    frames += 1
+                    print("FPS of the video is {:5.2f}".format( frames / (time.time() - start)))
+                    cv2.imshow("frame", orig_im)
+                    key = cv2.waitKey(1)
+                    if key & 0xFF == ord('q'):
+                        break
+                    continue
+
+                im_dim = im_dim.repeat(output.size(0), 1)
+                scaling_factor = torch.min(inp_dim/im_dim,1)[0].view(-1,1)
+                output[:,[1,3]] -= (inp_dim - scaling_factor*im_dim[:,0].view(-1,1))/2
+                output[:,[2,4]] -= (inp_dim - scaling_factor*im_dim[:,1].view(-1,1))/2
+                
+                output[:,1:5] /= scaling_factor
+        
+                for i in range(output.shape[0]):
+                    output[i, [1,3]] = torch.clamp(output[i, [1,3]], 0.0, im_dim[i,0])
+                    output[i, [2,4]] = torch.clamp(output[i, [2,4]], 0.0, im_dim[i,1])
+                
+                classes = load_classes('data_output/data/obj.names')
+                print (classes,"classes")
+                colors = pkl.load(open("pallete", "rb"))
+                
+                list(map(lambda x: write(x, orig_im), output))
+                
+                cv2.imshow("frame", orig_im)
+                cv2.imwrite('detection.png', orig_im)
+                key = cv2.waitKey(1)
+                if key & 0xFF == ord('q'):
+                    break
+                frames += 1
+                print("FPS of the video is {:5.2f}".format( frames / (time.time() - start)))
+                
+            else:
+                break
+    else:
+        imgs= load_images_from_folder("test")
+        index=0
+        for frame in imgs:
             img, orig_im, dim = prep_image(frame, inp_dim)
             im_dim = torch.torch.cuda.FloatTensor(dim).repeat(1,2)
 
@@ -151,10 +210,10 @@ if __name__ == '__main__':
                 frames += 1
                 print("FPS of the video is {:5.2f}".format( frames / (time.time() - start)))
                 cv2.imshow("frame", orig_im)
-                key = cv2.waitKey(1)
+                """key = cv2.waitKey(1)
                 if key & 0xFF == ord('q'):
                     break
-                continue
+                continue"""
 
             im_dim = im_dim.repeat(output.size(0), 1)
             scaling_factor = torch.min(inp_dim/im_dim,1)[0].view(-1,1)
@@ -162,7 +221,7 @@ if __name__ == '__main__':
             output[:,[2,4]] -= (inp_dim - scaling_factor*im_dim[:,1].view(-1,1))/2
             
             output[:,1:5] /= scaling_factor
-    
+
             for i in range(output.shape[0]):
                 output[i, [1,3]] = torch.clamp(output[i, [1,3]], 0.0, im_dim[i,0])
                 output[i, [2,4]] = torch.clamp(output[i, [2,4]], 0.0, im_dim[i,1])
@@ -174,12 +233,14 @@ if __name__ == '__main__':
             list(map(lambda x: write(x, orig_im), output))
             
             cv2.imshow("frame", orig_im)
-            cv2.imwrite('detection.png', orig_im)
+            name="detection/"+str(index)+".png"
+            index+=1
+            print(name)
+            cv2.imwrite(name, orig_im)
             key = cv2.waitKey(1)
             if key & 0xFF == ord('q'):
                 break
             frames += 1
             print("FPS of the video is {:5.2f}".format( frames / (time.time() - start)))
-            
-        else:
-            break
+        cv2.waitKey(5)
+        cv2.destroyAllWindows()
